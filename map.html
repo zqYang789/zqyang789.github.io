@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
     <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
     <title>gis地图</title>
-	<link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
-	<script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
-	<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<script src="http://api.map.baidu.com/getscript?v=2.0&ak=iDmSq834ZOEbbACXVVDcP4H4x0O6Wfgq&services=&t=20200824135534"></script>
+	<link rel="stylesheet" href="https://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://api.map.baidu.com/getscript?v=2.0&ak=iDmSq834ZOEbbACXVVDcP4H4x0O6Wfgq&services=&t=20200824135534"></script>
 	<script src="js/covert.js"></script>
     <link rel="stylesheet" href="https://zqy789.gitee.io/arcgis_api/3.21/esri/themes/calcite/dijit/calcite.css">
 	<link rel="stylesheet" href="https://zqy789.gitee.io/arcgis_api/3.21/dijit/themes/claro/claro.css">
@@ -150,7 +150,7 @@
       </style>
 	  
 	  
-      <script src="http://zqy789.gitee.io/arcgis_api/3.21/init.js"></script>
+      <script src="https://zqy789.gitee.io/arcgis_api/3.21/init.js"></script>
     <script>
     var map,layer1,layer2,navToolbar,registry,handler,measurement,dialog,paintLayer,draw,cz,mylocation;
     require([
@@ -269,7 +269,7 @@
 	                logo:false,				//logo不显示
 					zoom: 5,
 				});
-				var map_two ="http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineCommunity/MapServer";
+				var map_two ="https://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineCommunity/MapServer";
 				var map_three = "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer";
 				layer1 = new esri.layers.ArcGISTiledMapServiceLayer(map_two);
 				layer2 = new esri.layers.ArcGISTiledMapServiceLayer(map_three);
