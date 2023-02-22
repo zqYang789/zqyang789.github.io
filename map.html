@@ -1,0 +1,724 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>gis地图</title>
+	<link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="http://api.map.baidu.com/getscript?v=2.0&ak=iDmSq834ZOEbbACXVVDcP4H4x0O6Wfgq&services=&t=20200824135534"></script>
+	<script src="js/covert.js"></script>
+    <link rel="stylesheet" href="https://zqy789.gitee.io/arcgis_api/3.21/esri/themes/calcite/dijit/calcite.css">
+	<link rel="stylesheet" href="https://zqy789.gitee.io/arcgis_api/3.21/dijit/themes/claro/claro.css">
+	<link rel="stylesheet" href="https://zqy789.gitee.io/arcgis_api/3.21/esri/css/esri.css">
+	 
+    <style>
+      html,body {
+        height:100%;
+        width:100%;
+        margin:0;
+      }
+      #titlePane{
+        width:300px;
+		font-size:9px;
+      }
+	  .tooltip{
+	  	opacity:1;
+		!important;
+	  }
+	  .calcite .dijitTitlePaneTextNode {
+		line-height: 1;
+		font-size: 12px;
+		color: inherit;
+	  }
+
+	 .zoominIcon {
+        background-image: url(images/nav_zoomin.png);
+        width: 16px;
+        height: 16px;
+      }
+
+      .zoomoutIcon {
+        background-image: url(images/nav_zoomout.png);
+        width: 16px;
+        height: 16px;
+      }
+
+      .zoomfullextIcon {
+        background-image: url(images/nav_fullextent.png);
+        width: 16px;
+        height: 16px;
+      }
+
+      .zoomprevIcon {
+        background-image: url(images/nav_previous.png);
+        width: 16px;
+        height: 16px;
+      }
+
+      .zoomnextIcon {
+        background-image: url(images/nav_next.png);
+        width: 16px;
+        height: 16px;
+      }
+
+      .panIcon {
+        background-image: url(images/nav_pan.png);
+        width: 16px;
+        height: 16px;
+      }
+
+      .deactivateIcon {
+        background-image: url(images/nav_decline.png);
+        width: 16px;
+        height: 16px;
+      }
+	  
+	  .cj{
+	 	background-image: url(images/measure.png);
+        width: 16px;
+        height: 16px;
+	  }
+	  
+	  .clean{
+	 	background-image: url(images/clean.png);
+        width: 16px;
+        height: 16px;
+	  }
+	  .paint{
+	 	background-image: url(images/paint.png);
+        width: 16px;
+        height: 16px;
+	  }
+	  .mylocation{
+	 	background-image: url(images/location.png);
+	 	width: 16px;
+        height: 16px;
+	  }
+	  .map_tab {
+		width: 190px;
+		height: 60px;
+		position: absolute;
+		right: 10px;
+		bottom: 5px;
+		z-index: 99;
+	  }
+	  .map_tab a {
+		width: 85px;
+		height: 60px;
+		float: left;
+		margin: 0 5px;
+		position: relative;
+		border-radius: 3px;
+	  }
+	
+	  .map_two {
+		background: url(images/map_bg.jpg) no-repeat 50% 0;
+		display: block;
+	  }
+	  .map_three {
+		background: url(images/map_bg.jpg) no-repeat 50% 100%;
+		display: block;
+	  }
+	  .tm_box {
+		width: 100%;
+		height: 100%;
+		background: url(images/tm_bg.png);
+		display: block;
+		position: absolute;
+		z-index: 999;
+		border-radius: 3px;
+		display: none;
+	  }
+	  .map_tab a span {
+		position: absolute;
+		border-top-left-radius: 3px;
+		border-bottom-left-radius: 3px;
+		border-bottom-right-radius: 3px;
+		bottom: 0;
+		right: 0;
+		width: 32px;
+		height: 15px;
+		line-height: 15px;
+		background: #0365c0;
+		color: #fff;
+		text-align: center;
+	  }
+
+      </style>
+	  
+	  
+      <script src="http://zqy789.gitee.io/arcgis_api/3.21/init.js"></script>
+    <script>
+    var map,layer1,layer2,navToolbar,registry,handler,measurement,dialog,paintLayer,draw,cz,mylocation;
+    require([
+		"dojo/dom",
+		"dojo/json",
+		
+		"esri/Color",
+		"dojo/_base/lang",
+		
+		"dojo/keys",
+		"dojo/parser",
+		"dojo/sniff",
+		"dojo/_base/array",
+		
+		"esri/config",
+		"esri/InfoTemplate",
+		"esri/sniff",
+		
+		"esri/map",
+		"esri/toolbars/edit",
+		"esri/layers/ArcGISDynamicMapServiceLayer",
+		"esri/request",
+		"esri/geometry/scaleUtils",
+		"esri/SnappingManager",
+		"esri/tasks/GeometryService",
+		"esri/dijit/Measurement",
+		"esri/layers/FeatureLayer",
+		"esri/layers/GraphicsLayer",
+		
+		
+		"esri/toolbars/navigation",
+		
+		"dojo/_base/event",
+		"dojo/on",
+		"dijit/registry",
+		"esri/renderers/SimpleRenderer",
+		"esri/graphic",
+		
+		"dijit/Menu", 
+		"dijit/MenuItem", 
+		"dijit/MenuSeparator",
+		
+		
+		"dojo/query",
+		"esri/toolbars/draw",
+		"esri/tasks/FindTask",
+		"esri/tasks/FindParameters",
+		"esri/geometry/Point",
+		"esri/geometry/Polyline",
+		"esri/geometry/Polygon",
+		"esri/SpatialReference",
+		"esri/symbols/SimpleMarkerSymbol",
+		"esri/symbols/SimpleLineSymbol",
+		"esri/symbols/SimpleFillSymbol",
+		"esri/symbols/TextSymbol",
+		"esri/symbols/PictureMarkerSymbol",
+		"esri/renderers/UniqueValueRenderer",
+		"esri/renderers/ClassBreaksRenderer",
+		
+		
+		"dijit/registry",
+		"dijit/layout/BorderContainer",
+		
+		
+		
+		"dijit/layout/ContentPane",
+		"dijit/TitlePane",
+		"dijit/form/CheckBox",
+		"esri/dijit/OverviewMap",
+		
+		"esri/dijit/Scalebar",
+		
+		"dojo/domReady!"
+      ], function(
+    	        dom, JSON, Color, lang, keys, parser,sniff,arrayUtils,
+    	        esriConfig,InfoTemplate, has, Map,Edit, ArcGISDynamicMapServiceLayer, request, scaleUtils, SnappingManager, GeometryService, 
+    	        Measurement, FeatureLayer,GraphicsLayer,Navigation,event, on, registry, SimpleRenderer,Graphic,Menu, MenuItem, MenuSeparator,query,
+    	        Draw,FindTask, FindParameters,Point,Polyline,Polygon,SpatialReference,SimpleMarkerSymbol, 
+    	        SimpleLineSymbol,SimpleFillSymbol,TextSymbol,PictureMarkerSymbol,UniqueValueRenderer,ClassBreaksRenderer
+    	) {
+
+			configMap();
+	    	initMap();
+			dojo.connect(map, "onLoad", function(map) {
+				
+				changeBaseMap();
+				listenMouse();
+				iniOverviewMap();
+				initScalebar();
+				initMeasurement();
+				initDialog();
+				initTools();
+				
+
+				initDraw();
+				listenDrawStart();
+				listenDrawEnd();
+				initEditing();
+				
+	      	});
+
+			
+
+			//地图参数配置
+			function configMap(){
+				parser.parse();
+				var portalUrl = "https://www.arcgis.com";
+		        esriConfig.defaults.io.proxyUrl = "/proxy/";
+		        esriConfig.defaults.io.alwaysUseProxy = false;
+		        esriConfig.defaults.geometryService = new GeometryService("https://utility.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer");
+			}
+	    	//初始化地图
+		    function initMap(){
+		        map = new Map("map",{
+	                center: [106.64, 37.62],		//地图中心
+	                logo:false,				//logo不显示
+					zoom: 5,
+				});
+				var map_two ="http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineCommunity/MapServer";
+				var map_three = "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer";
+				layer1 = new esri.layers.ArcGISTiledMapServiceLayer(map_two);
+				layer2 = new esri.layers.ArcGISTiledMapServiceLayer(map_three);
+				layer2.visible=false;
+		        map.addLayer(layer1);
+				map.addLayer(layer2);
+				mylocation = new GraphicsLayer();
+				map.addLayer(mylocation);
+		    };
+			//初始化画图工具
+			function initDraw(){
+				draw = new Draw(map, { showTooltips: true });
+				paintLayer = new GraphicsLayer();
+				map.addLayer(paintLayer);
+			}
+
+			//监听开始画图
+			function listenDrawStart(){
+				var markerSymbol= new SimpleMarkerSymbol();
+				var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 2);
+				var fillSymbol= new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, lineSymbol,  new dojo.Color([0, 0, 255 ,0.4]));
+
+				
+				query("span").on("click",function(event){
+		            var value=event.currentTarget.title;
+		            switch(value){
+		                case "绘制点":{
+							draw.setMarkerSymbol(markerSymbol);
+		                    draw.activate(Draw.MULTI_POINT, {
+		                        showTooltips:true
+		                    });
+							xz("hzd");
+		                    break;
+		                }
+		                case "绘制折线":{
+							draw.setLineSymbol(lineSymbol);
+							draw.activate(Draw.MULTI_POINT, {
+		                        showTooltips:true
+		                    });
+		                    draw.activate(Draw.POLYLINE, {
+		                        showTooltips:true
+		                    });
+							xz("zx");
+		                    break;
+		                }
+		                case "绘制面":{
+							draw.setFillSymbol(fillSymbol);
+		                    draw.activate(Draw.POLYGON, {
+		                        showTooltips:true
+		                    });
+							xz("hzm");
+		                    break;
+		                }
+		                case "徒手线":{
+							draw.setLineSymbol(lineSymbol);
+		                    draw.activate(Draw.FREEHAND_POLYLINE, {
+		                        showTooltips:true
+		                    });
+							xz("tsx");
+		                    break;
+		                }
+		                case "徒手面":{
+							draw.setFillSymbol(fillSymbol);
+		                    draw.activate(Draw.FREEHAND_POLYGON, {
+		                        showTooltips:true
+		                    });
+							xz("tsm");
+		                    break;
+		                }
+						case "绘制圆":{
+							draw.setFillSymbol(fillSymbol);
+		                    draw.activate(Draw.CIRCLE, {
+		                        showTooltips:true
+		                    });
+							xz("zy");
+		                    break;
+		                }
+						case "绘制椭圆":{
+							draw.setFillSymbol(fillSymbol);
+		                    draw.activate(Draw.ELLIPSE, {
+		                        showTooltips:true
+		                    });
+							xz("ty");
+		                    break;
+		                }
+						case "箭头":{
+							draw.setFillSymbol(fillSymbol);
+		                    draw.activate(Draw.ARROW, {
+		                        showTooltips:true
+		                    });
+							xz("jt");
+		                    break;
+		                }
+		            }
+	           });
+			}
+	        
+			//画图结束监听事件
+			function listenDrawEnd(){
+				var markerSymbol= new SimpleMarkerSymbol();
+				var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 3);
+				var fillSymbol= new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, lineSymbol,  new dojo.Color([0, 0, 255 ,0.4]));
+				on(draw,"draw-complete", function (result) {
+	                var geometry=result.geometry;
+	                var type=geometry.type;
+	                var graphic;
+	                switch (type) {
+	                    case "multipoint":
+	                        graphic= new Graphic(geometry, markerSymbol);
+							paintLayer.add(graphic);
+	               			draw.deactivate();
+	                        break;
+	                    case "polyline":
+	                        graphic= new Graphic(geometry, lineSymbol);
+							paintLayer.add(graphic);
+	               			draw.deactivate();
+							
+	                        break;
+	                    case "polygon":
+	                        graphic= new Graphic(geometry, fillSymbol);
+							paintLayer.add(graphic);
+	               			draw.deactivate();
+	                        break;
+						case "arrow":
+	                        graphic= new Graphic(geometry, fillSymbol);
+							paintLayer.add(graphic);
+	               			draw.deactivate();
+	                        break;
+	                }
+
+	                replyPrimary();
+	         	});
+			}
+
+			//工具图标选中状态恢复到初始状态
+			function replyPrimary(){
+				var objs = new Array("hzd","zx","tsx","tsm","hzm","zy","ty","jt");
+				for(var i=0;i<objs.length;i++){
+					var url = "images/"+objs[i]+"xz.png";
+					if(document.getElementById(objs[i]).src.indexOf("xz")>0){	
+						document.getElementById(objs[i]).src="images/"+objs[i]+".png";
+					}	
+				}
+			}
+		
+			  
+			  
+			//初始化画图图层编辑 
+			function initEditing(evt) {
+				  var editToolbar = new Edit(map);
+				  editToolbar.on("deactivate", function(evt) {
+					if (evt.info.isModified) {
+					
+					  //paintLayer.applyEdits(null, [evt.graphic], null);
+					}
+				  });
+				  var editingEnabled = false;
+				  paintLayer.on("dbl-click", function(evt) {
+					event.stop(evt);
+					if (editingEnabled) {
+					  editingEnabled = false;
+					  editToolbar.deactivate();
+					  //paintLayer.clearSelection();
+					}
+					else {
+					  editingEnabled = true;
+					  editToolbar.activate(Edit.EDIT_VERTICES | Edit.ROTATE | Edit.SCALE | Edit.MOVE, evt.graphic);
+					  //editToolbar.activate(Edit.MOVE, evt.graphic);
+					 
+					}
+				  });
+			}
+			//地图切换监听
+			function changeBaseMap(){
+				query("#map_two").on("click",function(event){
+						layer1.show();
+						layer2.hide();
+					
+				    });
+				query("#map_three").on("click",function(event){
+					layer1.hide();
+					layer2.show();
+				
+			    });
+			}
+
+			//初始化对话框
+			function initDialog(){
+				dialog = new dijit.TooltipDialog({  //dialog初始化
+					  id: "tooltipDialog",
+					  style: "position: absolute; width: 160px; font: normal normal normal 10pt Helvetica;z-index:100"  
+		        });
+				dojo.style(dialog.domNode, "opacity", 0.85);  // 透明度
+		        dialog.startup();   // 启动dialog
+			}
+
+
+			//初始化鹰眼
+			function iniOverviewMap(){
+				var div = document.getElementById("map_zoom_slider").style;
+	   		    div.visibility = "collapse";
+				//鹰眼
+				var overviewMap = new esri.dijit.OverviewMap({
+					map: map,
+					visible: false,			 // 初始化可见，默认为false  
+					attachTo: "bottom-right",   // 默认右上角  
+					width: 150,				 // 默认值是地图高度的 1/4th  
+					height: 100,			 // 默认值是地图高度的 1/4th   
+					opacity: 0.5,            // 透明度 默认0.5  
+					maximizeButton: false,    // 最大化,最小化按钮，默认false  
+					expandFactor: 2,         //概览地图和总览图上显示的程度矩形的大小之间的比例。默认值是2，这意味着概览地图将至少是两倍的大小的程度矩形。  
+					color: "#0000FF"         // 默认颜色为#000000  
+				 });
+				overviewMap.startup();
+			}
+
+			//初始化比例尺
+			function initScalebar(){
+				//比例尺
+				var scalebar=new esri.dijit.Scalebar({
+	 				map:map,
+					scalebarUnit: "metric",	//单位的显示方式
+					attachTo:"bottom-left"	//显示地址
+				});
+			}
+
+			//监听鼠标位置信息
+			function listenMouse(){
+				map.on("mouse-move",function(mouseEvt){//鼠标位置监听事件
+					var newPoint=new Point(mouseEvt.mapPoint.x,mouseEvt.mapPoint.y,new SpatialReference({wkid:102100}));
+					$("#mouseLoc").html("鼠标位置  x:"+newPoint.getLongitude()+" y:"+newPoint.getLatitude());
+				});
+			}
+			//初始化测量
+			function initMeasurement(){
+				measurement = new Measurement({
+				  map: map
+				}, dom.byId("measurementDiv"));
+				measurement.startup();
+			}
+
+			//初始化工具栏
+			function initTools(){
+				navToolbar = new Navigation(map);
+				registry.byId("zoomin").on("click", function () {
+				  	map.setMapCursor("url(images/nav_zoomin.png),auto");
+		            navToolbar.activate(Navigation.ZOOM_IN);
+					dojo.disconnect(handler);
+					handler = dojo.connect(map, "onClick", function(event) {
+						map.centerAndZoom(event.mapPoint,map.getZoom()+1);
+					});
+		        });
+		        registry.byId("zoomout").on("click", function () {
+				  	map.setMapCursor("url(images/nav_zoomout.png),auto");
+		            navToolbar.activate(Navigation.ZOOM_OUT);
+					dojo.disconnect(handler);
+					handler = dojo.connect(map, "onClick", function(event) {
+						map.centerAndZoom(event.mapPoint,map.getZoom()-1);
+					});
+		        });
+		        registry.byId("zoomfullext").on("click", function () {
+		            navToolbar.zoomToFullExtent();
+		        });
+		        registry.byId("pan").on("click", function () {
+				  	map.setMapCursor("url(images/nav_pan.png),auto");
+		            navToolbar.activate(Navigation.PAN);
+		        });
+
+		        registry.byId("deactivate").on("click", function () {
+				  	map.setMapCursor("default");
+					dojo.disconnect(handler);
+		            navToolbar.deactivate();
+					measurement.setTool("area",false);
+		        });
+				registry.byId("clean").on("click", function () {
+				  	map.setMapCursor("default");
+					dojo.disconnect(handler);
+		            navToolbar.deactivate();
+					measurement.clearResult();
+					measurement.setTool("area",false);
+					paintLayer.clear();
+					toolbar.deactivate();
+		        });
+
+
+				query("#sweep").on("click",function(event){
+					replyPrimary();
+					map.setMapCursor("default");
+		            navToolbar.deactivate();
+					paintLayer.clear();
+					toolbar.deactivate(); 	
+	            });
+
+				query("#location").on("click",function(event){
+					var x = document.getElementById("x").value;
+					var y = document.getElementById("y").value;
+					if(x!=null&&y!=null){
+						mylocation.clear();
+						var mapPoint=new Point(x,y,new SpatialReference({wkid:4326}));
+						var pictureMarkerSymbol = new PictureMarkerSymbol('images/mylocation.png', 30, 30);
+						var graphic = new Graphic(mapPoint, pictureMarkerSymbol);
+						mylocation.add(graphic);
+						setTimeout(function(){
+							map.centerAndZoom(mapPoint,8)
+						}, 100);
+						var geoc = new BMap.Geocoder();
+						var point = new BMap.Point(x,y);
+						var baidu = wgs84tobd09(Number(x),Number(y));
+						geoc.getLocation(new BMap.Point(baidu[0],baidu[1]), function(rs){
+			                var addComp = rs.addressComponents;
+			                $('#resultLocation').text('详细地址：'+addComp.province + ", " + addComp.city + ", " + addComp.district);
+			            })
+					}				
+	            });
+		        
+		        
+				registry.byId("cj").on("click", function (evt) {
+			  		map.setMapCursor("default");
+			  		dojo.disconnect(handler);
+			  		navToolbar.deactivate();
+			  		if(document.getElementById("cjdiv").style.display==""){
+						document.getElementById("cjdiv").style.display="none";
+						measurement.clearResult();
+						measurement.setTool("area",false);
+					}else{
+						document.getElementById("cjdiv").style.display="";
+					}  		
+		        });
+			  	registry.byId("paint").on("click", function (evt) {
+			  		if(document.getElementById("paintdiv").style.display==""){
+						document.getElementById("paintdiv").style.display="none";
+					}else{
+						document.getElementById("paintdiv").style.display="";
+					}
+	          	});
+
+	          	registry.byId("mylocation").on("click", function (evt) {
+			  		if(document.getElementById("mylocationdiv").style.display==""){
+						document.getElementById("mylocationdiv").style.display="none";
+					}else{
+						document.getElementById("mylocationdiv").style.display="";
+					}
+	          	});
+	          
+			}
+
+			//工具选中状态
+			function xz(obj){
+				var objs = new Array("hzd","zx","tsx","tsm","hzm","zy","ty","jt");
+				for(var i=0;i<objs.length;i++){
+					var url = "images/"+objs[i]+"xz.png";
+					if(obj==objs[i]){
+						document.getElementById(objs[i]).src=url;
+					}else{
+						if(document.getElementById(objs[i]).src.indexOf("xz")>0){	
+							document.getElementById(objs[i]).src="images/"+objs[i]+".png";
+						}
+					}
+				}
+			}
+      });
+	
+
+
+
+
+	function displayProp(obj){  
+            var msg ="";  
+            for(var name in obj){  
+                msg += name+": "+ obj[name]+"    ";  
+            }  
+            alert(msg);  
+        }  
+	function closeMD(id){
+		document.getElementById(id).style.display="none";
+	}
+
+    </script>
+  </head>
+
+  <body class="calcite">
+			  <div class="panel panel-primary" style="width:50px;position:absolute; left:10px; top:65px; z-Index:999;">
+				<div class="panel-heading" style="font-size:12px;padding:10px 10px;">
+					工具
+				</div>
+				<div class="panel-body" style="padding:0;">
+						  <div data-dojo-type="dijit/form/Button" id="deactivate" data-dojo-props="iconClass:'deactivateIcon'" title="选择"></div>
+						  <div data-dojo-type="dijit/form/Button" id="zoomin"  data-dojo-props="iconClass:'zoominIcon'" title="放大"></div>
+						  <div data-dojo-type="dijit/form/Button" id="zoomout" data-dojo-props="iconClass:'zoomoutIcon'" title="缩小"></div>
+						  <div data-dojo-type="dijit/form/Button" id="pan" data-dojo-props="iconClass:'panIcon'" title="平移"></div>
+						  <div data-dojo-type="dijit/form/Button" id="zoomfullext" data-dojo-props="iconClass:'zoomfullextIcon'" title="全图"></div>
+						  <div data-dojo-type="dijit/form/Button" id="cj" data-dojo-props="iconClass:'cj'" title="测量"></div>
+						  <div data-dojo-type="dijit/form/Button" id="paint" data-dojo-props="iconClass:'paint'" title="画图"></div>
+						  <div data-dojo-type="dijit/form/Button" id="mylocation" data-dojo-props="iconClass:'mylocation'" title="定位"></div>
+						  <div data-dojo-type="dijit/form/Button" id="clean" data-dojo-props="iconClass:'clean'" title="清除"></div>
+				</div>
+				
+			</div>
+			  <div style="position:absolute; left:80px; bottom:10px; z-Index:998;display:none;" id="cjdiv">
+							  <div id="titlePane" data-dojo-type="dijit/TitlePane" data-dojo-props="title:'测量工具', closable:false, open:true">
+									<div id="measurementDiv"></div>
+							  </div>
+   			  </div>
+			  <div  class="panel panel-info" style="position:absolute; left:60px; bottom:35px; z-Index:998;display:none;" id="paintdiv">
+							 <div class="panel-heading" style="font-size:12px;padding:10px 10px;">
+								画图工具<button type="button" class="close" data-dismiss="modal" aria-hidden="true" onClick="closeMD('paintdiv')">×</button>
+							 </div>
+							 <div class="panel-body">
+							 	  <span style="cursor:pointer" title="绘制点"><img id="hzd" src="images/hzd.png"></span>
+							 	  <span style="cursor:pointer" title="绘制折线"><img id="zx" src="images/zx.png"></span>
+								  <span style="cursor:pointer" title="徒手线"><img id="tsx" src="images/tsx.png"></span>
+								  <span style="cursor:pointer" title="绘制面"><img id="hzm" src="images/hzm.png"></span>
+								  <span style="cursor:pointer" title="徒手面"><img id="tsm" src="images/tsm.png"></span>
+								  <span style="cursor:pointer" title="绘制椭圆"><img id="ty" src="images/ty.png"></span>
+								  <span style="cursor:pointer" title="绘制圆"><img id="zy" src="images/zy.png"></span>
+                                  <span style="cursor:pointer" title="箭头"><img id="jt" src="images/jt.png"></span>
+								  <button type="button" id="sweep" class="btn btn-danger btn-sm" style="background:#D9534F">清除</button>
+							 </div>
+   			  </div>
+
+   			   <div  class="panel panel-info" style="position:absolute; left:60px; bottom:50px; z-Index:998;display:none;" id="mylocationdiv">
+							 <div class="panel-heading" style="font-size:12px;padding:10px 10px;">
+								定位<button type="button" class="close" data-dismiss="modal" aria-hidden="true" onClick="closeMD('mylocationdiv')">×</button>
+							 </div>
+							 <div class="panel-body">
+							 	 <div>
+									<span>经度</span><span style="margin-left: 10px;"><input type="text" size="15" id="x"/></span>
+									<span style="margin-left: 15px;">纬度</span><span style="margin-left: 10px;"><input type="text" size="15" id="y"/></span>
+									<button type="button" id="location" class="btn btn-danger btn-sm" style="background:#D9534F">定位</button>
+									<div id="resultLocation" style="width:100%;height30px;margin-top: 20px;">详细地址：</div>
+								 </div>
+								  
+							 </div>
+   			  </div>
+  	
+    <div id="mainWindow" data-dojo-type="dijit/layout/BorderContainer" data-dojo-props="design:'headline',gutters:false"
+    style="width:100%; height:100%;">
+      <div id="map" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'center'" style="padding:0px;">
+        
+      </div>
+    </div>
+    <div id="mouseLoc" style="position:absolute;bottom:2px;background-color: #fff;z-Index:99;font-size:10px;">鼠标位置</div>
+    <div class="map_tab">
+    	<a href="javascript:void(0)" id="map_two" class="map_two">
+        	<p class="tm_box"></p> <span>二维</span>
+        </a> 
+        <a href="javascript:void(0)" id="map_three" class="map_three">
+        	<p class="tm_box  tm_act"></p> <span class="map_act">影像</span>
+        </a>
+    </div>
+  </body>
+</html>

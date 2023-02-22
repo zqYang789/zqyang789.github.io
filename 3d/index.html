@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>SceneView - 4.15</title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.15/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.15/"></script>
+    <script src="js/jquery.min.js"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+	  var map,view,graphicsLayer,modelGraphicsLayer,modelTextGraphicsLayer,outLineSymbol,viewLoadedListener,isNotLoaded;
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/GraphicsLayer",
+        "esri/Graphic"
+      ], function(Map, SceneView, GraphicsLayer, Graphic) {
+        
+		initMap();
+		initLayer();
+		initSymbol();
+		
+		  
+
+		view.when(function() {
+
+		
+		  	view.on("pointer-move",function (evt){
+	      		showMouseLocation(evt);
+	      	});
+			
+			var outLineData = getOutLineData();
+			addOutLineLayer(outLineData);
+
+
+			isNotLoaded = true;
+			viewLoadedListener = setInterval(function(){
+				if(isNotLoaded){
+					var testPoint  = {
+			          type: "point",
+			          x: 117,
+			          y: 36
+			        };
+			        var resultPoint=view.toMap(testPoint);
+			        if(resultPoint.z!=0){
+				        isNotLoaded = false;
+				        var modelDatas = getModelData();
+						for(var i=0;i<modelDatas.length;i++){
+							addModdelLayer(modelDatas[i]);
+						}
+			        }
+				}else{
+					clearInterval(viewLoadedListener);
+				}
+			},2*1000);
+
+	
+		});
+		
+        function initMap(){
+	        map = new Map({
+	          basemap: "hybrid",
+	          ground: "world-elevation"
+	        });
+	        view = new SceneView({
+	          container: "viewDiv",
+	          map: map,
+	          camera: {
+	            position: {
+	              x: 117.4310,
+	              y: 29.3169,
+	              z: 300000
+	            },
+	            heading: 0,
+	            tilt: 40
+	          }
+	        });
+        }
+        function initLayer(){
+	        graphicsLayer = new GraphicsLayer();
+	        modelGraphicsLayer = new GraphicsLayer();
+	        modelTextGraphicsLayer = new GraphicsLayer();
+	        map.add(graphicsLayer);
+	        map.add(modelGraphicsLayer);
+	        map.add(modelTextGraphicsLayer);
+        }
+		function initSymbol(){
+			outLineSymbol = {
+	          type: "simple-line",
+	          color: [226, 119, 40],
+	          width: 4
+	        };
+		}
+		function showMouseLocation(evt){
+	      	const screenPoint = {
+		      	type: "point",
+				x:evt.x,
+	      		y:evt.y
+			};
+
+	      	var mapPoint=view.toMap(screenPoint);
+	      	if(mapPoint==null){
+	      		return ;
+	      	}
+	      	var longitude=mapPoint.longitude.toFixed(6);	//经度
+	      	var latitude=mapPoint.latitude.toFixed(6);		//纬度
+	      	var gaodu =mapPoint.z.toFixed(6);				//高程
+	      	var str="经度:"+longitude+",纬度:"+latitude+",海拔:"+gaodu;
+	      	$("#mapLocation").html(str);
+	      }
+        
+        function getOutLineData(){
+	        var path;
+	        $.ajax({
+			   url: "json/outline.json",
+			   type: "GET",
+			   async:false,
+			   dataType: "json",
+			   success: function(data) {
+			       path = data.path;
+			   }
+			})
+			return path;
+        }
+        function addOutLineLayer(path){
+	        var polyline = {
+	          type: "polyline",
+	          paths:path
+	        };
+	        var polylineGraphic = new Graphic({
+	          geometry: polyline,
+	          symbol: outLineSymbol
+	        });
+	        graphicsLayer.add(polylineGraphic);
+        }
+        function getModelData(){
+	        var model;
+	        $.ajax({
+			   url: "json/model.json",
+			   type: "GET",
+			   async:false,
+			   dataType: "json",
+			   success: function(data) {
+			       model = data.models;
+			   }
+			})
+			return model;
+        }
+       	function addModdelLayer(model){
+	       	var modelPoint  = {
+	          type: "point",
+	          x: model.x,
+	          y: model.y
+	        };
+
+	        var mapPoint=view.toMap(modelPoint);
+			const modelSymbol = {
+			  type: "point-3d",
+			  symbolLayers: [{
+			    type: "object",
+			  	width:model.width,		//宽度：从东到西，单位（m）
+			  	height:model.height,	//高度：单位（m）
+			  	depth:model.depth,		//深度：从北到南，单位（m）
+			    resource: {
+			      href: "./test.glb"
+			    },
+			    material: { color: "white" },
+			    heading: 0 //朝向
+			  }]
+			}
+			var modelGraphic = new Graphic({
+	          geometry: modelPoint,
+	          symbol: modelSymbol
+	        });
+
+			var textPoint  = {
+	          type: "point",
+	          x: model.x,
+	          y: model.y,
+	          z: Number(model.height)+Number(mapPoint.z)+100
+	        };
+			var textSymbol = {
+			  type: "text",  // autocasts as new TextSymbol()
+			  text: model.name,
+			  color: "#ff0000",
+			  font: {  // autocasts as new Font()
+			    size: 10,
+			    weight: "bold",
+			  }
+			};
+			var modelTextGraphic = new Graphic({
+	          geometry: textPoint,
+	          symbol: textSymbol
+	        });
+
+			
+	        modelTextGraphicsLayer.add(modelGraphic)
+			modelGraphicsLayer.add(modelTextGraphic);
+       	}
+      });
+    </script>
+
+	<style>
+    html,
+    body {
+      margin:0;
+      padding:0;
+      height:100%;
+    }
+    .mouseLocation{
+   	    float:left;
+	    width:350px;
+	    position:absolute;
+	    bottom:15px;
+	    left:0;
+	    height:20px;
+	    background-color:#b3c1d1;
+	    opacity:0.8;
+	    font-size:8px;
+    }
+  </style>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+
+	    <div id="mapLocation" class="mouseLocation"></div>
+    </div>
+  </body>
+</html>

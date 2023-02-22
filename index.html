@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>gis工具类</title>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+        }
+        .main{
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+        .left{
+            width: 10%;
+            border-right: 1px solid #01c2ff;
+            padding-top: 25px;
+        }
+        .right{
+            width:90%;
+        }
+        li{
+            list-style: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <div class="left">
+            <ul>
+                <li>
+                    <a href="map.html" target="right">基础地图</a>
+                </li>
+                <li>
+                    <a href="measure.html" target="right">测量面积</a>
+                </li>
+                <li>
+                    <a href="outline.html" target="right">获取轮廓</a>
+                </li>
+            </ul>
+        </div>
+        <div class="right">
+            <iframe src="map.html" frameborder="0" width="100%" height="99.5%" name="right"></iframe>
+        </div>
+    </div>
+</body>
+</html>

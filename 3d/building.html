@@ -1,0 +1,286 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>3d-building</title>
+
+    <link
+      rel="stylesheet"
+      href="http://zqy789.gitee.io/arcgis_api/4.15/esri/themes/light/main.css"
+    />
+    <script src="http://zqy789.gitee.io/arcgis_api/4.15/init.js"></script>
+    <script src="js/jquery.min.js"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+	  var map,view,graphicsLayer,outLineSymbol,buildingLayer,buildingTextLayer,viewLoadedListener,isNotLoaded;
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/GraphicsLayer",
+        "esri/Graphic",
+		"esri/PopupTemplate"
+      ], function(Map, SceneView, GraphicsLayer, Graphic,PopupTemplate) {
+        
+		initMap();
+		initLayer();
+		initSymbol();
+		
+		  
+
+		view.when(function() {
+
+		  	view.on("pointer-move",function (evt){
+	      		showMouseLocation(evt);
+	      	});
+			
+			var outLineData = getOutLineData();
+			addOutLineLayer(outLineData);
+
+
+			isNotLoaded = true;
+			viewLoadedListener = setInterval(function(){
+				if(isNotLoaded){
+					var testPoint  = {
+			          type: "point",
+			          x: 117,
+			          y: 36
+			        };
+			        var resultPoint=view.toMap(testPoint);
+			        if(resultPoint.z!=0&&resultPoint.z<150){
+				        isNotLoaded = false;
+				        var buildingDatas = getBuildingData();
+				        if(buildingDatas.length>0){
+					        for(var i=0;i<buildingDatas.length;i++){
+						        addBuild(buildingDatas[i]);
+					        }
+				        }
+			        }
+				}else{
+					clearInterval(viewLoadedListener);
+				}
+			},2*1000);
+			listenMouseClick();
+
+			
+	
+		});
+
+		function listenMouseClick(){
+			view.on("click", function(evt){
+			
+			    var screenPoint  = {
+		          type: "point",
+		          x:evt.x,
+			      y:evt.y
+		        };
+			    view.hitTest(screenPoint).then(function(response){
+			    	var result = response.results[0];
+					console.info(result.graphic.layer);
+		         	if (result&&result.graphic.layer.id=="buildingLayer"){
+			         	
+		         	}
+			    })
+			});
+		
+			
+		}
+		
+        function initMap(){
+	        map = new Map({
+	          basemap: "hybrid",
+	          ground: "world-elevation"
+	        });
+	        view = new SceneView({
+	          container: "viewDiv",
+	          map: map,
+	          camera: {
+	            position: {
+	              x: 113.658521,
+	              y: 34.752359,
+	              z: 3000
+	            },
+	            heading: 0,
+	            tilt: 40
+	          }
+	        });
+
+	        view.ui._removeComponents(["attribution"]); 
+        }
+
+
+		function addOutLineLayer(path){
+	        var polyline = {
+	          type: "polyline",
+	          paths:path
+	        };
+	        var polylineGraphic = new Graphic({
+	          geometry: polyline,
+	          symbol: outLineSymbol
+	        });
+	        graphicsLayer.add(polylineGraphic);
+        }
+
+        
+        function getOutLineData(){
+	        var path;
+	        $.ajax({
+			   url: "json/outline.json",
+			   type: "GET",
+			   async:false,
+			   dataType: "json",
+			   success: function(data) {
+			       path = data.path;
+			   }
+			})
+			return path;
+        }
+        function initLayer(){
+	        graphicsLayer = new GraphicsLayer();
+	        buildingLayer = new GraphicsLayer({id:"buildingLayer"});
+	        buildingTextLayer = new GraphicsLayer();
+	        map.add(graphicsLayer);
+	        map.add(buildingLayer);
+	        map.add(buildingTextLayer);
+        }
+		function initSymbol(){
+			outLineSymbol = {
+	          type: "simple-line",
+	          color: [226, 119, 40],
+	          width: 4
+	        };
+		}
+		function showMouseLocation(evt){
+	      	const screenPoint = {
+		      	type: "point",
+				x:evt.x,
+	      		y:evt.y
+			};
+
+	      	var mapPoint=view.toMap(screenPoint);
+	      	if(mapPoint==null){
+	      		return ;
+	      	}
+	      	var longitude=mapPoint.longitude.toFixed(6);	//经度
+	      	var latitude=mapPoint.latitude.toFixed(6);		//纬度
+	      	var gaodu =mapPoint.z.toFixed(6);				//高程
+	      	var str="经度："+longitude+"，纬度："+latitude+"，海拔："+gaodu;
+	      	$("#mapLocation").html(str);
+	      }
+        
+        function getBuildingData(){
+	        var result;
+	        $.ajax({
+			   url: "json/building.json",
+			   type: "GET",
+			   async:false,
+			   dataType: "json",
+			   success: function(data) {
+			       result = data;
+			   }
+			})
+			return result;
+        }
+        function addBuild(obj){
+			var modelPoint  = {
+	          type: "point",
+	          x: obj.longitude,
+	          y: obj.latitude,
+	        };
+			var mapPoint=view.toMap(modelPoint);
+	        
+			var polygon = {
+	          type: "polygon", 
+	          rings: obj.pointlist
+	        };
+	        var symbol = {
+			  type: "polygon-3d",  
+			  symbolLayers: [{
+			    type: "extrude",  
+			    size: obj.buildingheight,
+			    material: { color: "red" }
+			  }]
+			};
+
+			var popupTemplate=new PopupTemplate({
+		    	title:"详情",
+		    	content:"<p>省份：{province}</p></br><p>城市：{city}</p></br><p>建筑物：{buildingname}</p></br>",
+		    	actions:[]
+	    	});
+	        var polygonGraphic = new Graphic({
+	          geometry: polygon,
+	          symbol: symbol,
+	          attributes:obj,
+	          popupTemplate:popupTemplate
+	        });
+	     
+	        
+	        buildingLayer.add(polygonGraphic);
+
+			var height = Number(obj.buildingheight)+Number(mapPoint.z)+3;
+	        var textPoint  = {
+	          type: "point",
+	          x: obj.longitude,
+	          y: obj.latitude,
+	          z: height
+	        };
+			var textSymbol = {
+			  type: "text",  // autocasts as new TextSymbol()
+			  text: obj.buildingname,
+			  color: "#ffffff",
+			  font: {  // autocasts as new Font()
+			    size: 10,
+			    weight: "bold",
+			  }
+			};
+			var buildingTextGraphic = new Graphic({
+	          geometry: textPoint,
+	          symbol: textSymbol
+	        });
+			buildingLayer.add(buildingTextGraphic);
+        }
+      
+	    
+      });
+    </script>
+
+	<style>
+    html,
+    body {
+      margin:0;
+      padding:0;
+      height:100%;
+    }
+    .mouseLocation{
+   	    float:left;
+	    width:350px;
+	    position:absolute;
+	    bottom:0;
+	    left:0;
+	    height:20px;
+	    background-color:#b3c1d1;
+	    opacity:0.8;
+	    font-size:8px;
+    }
+  </style>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+
+	    <div id="mapLocation" class="mouseLocation"></div>
+    </div>
+  </body>
+</html>
