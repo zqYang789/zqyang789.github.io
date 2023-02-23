@@ -97,6 +97,11 @@
 	 	width: 16px;
         height: 16px;
 	  }
+	  .import{
+		  background-image: url(images/import.png);
+		  width: 16px;
+		  height: 16px;
+	  }
 	  .map_tab {
 		width: 190px;
 		height: 60px;
@@ -152,7 +157,8 @@
 	  
       <script src="http://zqy789.gitee.io/arcgis_api/3.21/init.js"></script>
     <script>
-    var map,layer1,layer2,navToolbar,registry,handler,measurement,dialog,paintLayer,draw,cz,mylocation;
+    var map,layer1,layer2,navToolbar,registry,handler,measurement,dialog,paintLayer,draw,cz,mylocation,geojsonLayer;
+    var SimpleMarkerSymbol,SimpleLineSymbol,SimpleFillSymbol,Graphic,Polyline,SpatialReferences;
     require([
 		"dojo/dom",
 		"dojo/json",
@@ -179,8 +185,7 @@
 		"esri/dijit/Measurement",
 		"esri/layers/FeatureLayer",
 		"esri/layers/GraphicsLayer",
-		
-		
+
 		"esri/toolbars/navigation",
 		
 		"dojo/_base/event",
@@ -231,7 +236,12 @@
     	        Draw,FindTask, FindParameters,Point,Polyline,Polygon,SpatialReference,SimpleMarkerSymbol, 
     	        SimpleLineSymbol,SimpleFillSymbol,TextSymbol,PictureMarkerSymbol,UniqueValueRenderer,ClassBreaksRenderer
     	) {
-
+			this.SimpleMarkerSymbol = SimpleMarkerSymbol;
+			this.SimpleLineSymbol = SimpleLineSymbol;
+			this.SimpleFillSymbol = SimpleFillSymbol;
+			this.Graphic = Graphic;
+			this.Polyline = Polyline;
+			this.SpatialReference = SpatialReference;
 			configMap();
 	    	initMap();
 			dojo.connect(map, "onLoad", function(map) {
@@ -243,8 +253,8 @@
 				initMeasurement();
 				initDialog();
 				initTools();
-				
-
+				initLocation();
+				initGeojson();
 				initDraw();
 				listenDrawStart();
 				listenDrawEnd();
@@ -276,8 +286,7 @@
 				layer2.visible=false;
 		        map.addLayer(layer1);
 				map.addLayer(layer2);
-				mylocation = new GraphicsLayer();
-				map.addLayer(mylocation);
+
 		    };
 			//初始化画图工具
 			function initDraw(){
@@ -285,14 +294,22 @@
 				paintLayer = new GraphicsLayer();
 				map.addLayer(paintLayer);
 			}
+			//初始化定位图层
+			function initLocation(){
+				mylocation = new GraphicsLayer();
+				map.addLayer(mylocation);
+			}
+			//初始化geojson图层
+			function initGeojson(){
+				geojsonLayer = new GraphicsLayer();
+				map.addLayer(geojsonLayer);
+			}
 
 			//监听开始画图
 			function listenDrawStart(){
 				var markerSymbol= new SimpleMarkerSymbol();
 				var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255, 0, 0]), 2);
 				var fillSymbol= new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, lineSymbol,  new dojo.Color([0, 0, 255 ,0.4]));
-
-				
 				query("span").on("click",function(event){
 		            var value=event.currentTarget.title;
 		            switch(value){
@@ -646,7 +663,47 @@
 	function closeMD(id){
 		document.getElementById(id).style.display="none";
 	}
-
+	function upload(){
+		document.getElementById("upload").click();
+	}
+	function uploadComplete(){
+		var objFile = document.getElementById("upload");
+		if(objFile.files&&objFile.files.length>0){
+			var reader = new FileReader();//新建一个FileReader
+			reader.readAsText(objFile.files[0], "UTF-8");//读取文件
+			reader.onload = function(evt){ //读取完文件之后会回来这里
+				var fileString = evt.target.result; // 读取文件内容
+				var geojson = JSON.parse(fileString);
+				var markerSymbol= new SimpleMarkerSymbol();
+				var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new dojo.Color([188,59,229,1]), 2);
+				var fillSymbol= new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, lineSymbol,  new dojo.Color([194,251,235 ,0.4]));
+				geojsonLayer.clear();
+				for(var i=0;i<geojson.features.length;i++){
+					var feature = geojson.features[i]
+					var graphic;
+					switch (feature.type) {
+						case "MultiPolygon":
+							var polygon = new Polyline(new SpatialReference({wkid:4326}));
+							for(var j=0;j<feature.coordinates.length;j++){
+								polygon.addPath(feature.coordinates[j][0])
+							}
+							graphic= new Graphic(polygon, fillSymbol);
+							geojsonLayer.add(graphic);
+							map.setExtent(graphic.geometry.getExtent())
+							break;
+						case "Polygon":
+							var polygon = new Polyline(new SpatialReference({wkid:4326}));
+							polygon.addPath(feature.coordinates[0])
+							graphic= new Graphic(polygon, fillSymbol);
+							geojsonLayer.add(graphic);
+							map.setExtent(graphic.geometry.getExtent())
+							break;
+					}
+				}
+				console.info(geojsonLayer)
+			}
+		}
+	}
     </script>
   </head>
 
@@ -665,8 +722,9 @@
 						  <div data-dojo-type="dijit/form/Button" id="paint" data-dojo-props="iconClass:'paint'" title="画图"></div>
 						  <div data-dojo-type="dijit/form/Button" id="mylocation" data-dojo-props="iconClass:'mylocation'" title="定位"></div>
 						  <div data-dojo-type="dijit/form/Button" id="clean" data-dojo-props="iconClass:'clean'" title="清除"></div>
+						  <div data-dojo-type="dijit/form/Button" id="import" data-dojo-props="iconClass:'import'" title="导入"  onClick="upload()" ></div>
+						  <input id="upload" type="file" accept="" style="display: none" onchange="uploadComplete()"/>
 				</div>
-				
 			</div>
 			  <div style="position:absolute; left:80px; bottom:10px; z-Index:998;display:none;" id="cjdiv">
 							  <div id="titlePane" data-dojo-type="dijit/TitlePane" data-dojo-props="title:'测量工具', closable:false, open:true">
@@ -699,7 +757,7 @@
 									<span>经度</span><span style="margin-left: 10px;"><input type="text" size="15" id="x"/></span>
 									<span style="margin-left: 15px;">纬度</span><span style="margin-left: 10px;"><input type="text" size="15" id="y"/></span>
 									<button type="button" id="location" class="btn btn-danger btn-sm" style="background:#D9534F">定位</button>
-									<div id="resultLocation" style="width:100%;height30px;margin-top: 20px;">详细地址：</div>
+									<div id="resultLocation" style="width:100%;height:30px;margin-top: 20px;">详细地址：</div>
 								 </div>
 								  
 							 </div>
