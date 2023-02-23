@@ -568,7 +568,8 @@
 					measurement.clearResult();
 					measurement.setTool("area",false);
 					paintLayer.clear();
-					toolbar.deactivate();
+					mylocation.clear();
+					geojsonLayer.clear();
 		        });
 
 
@@ -576,10 +577,10 @@
 					replyPrimary();
 					map.setMapCursor("default");
 		            navToolbar.deactivate();
-					paintLayer.clear();
-					toolbar.deactivate();
 					geojsonLayer.clear();
 					mylocation.clear();
+					paintLayer.clear();
+
 	            });
 
 				query("#location").on("click",function(event){
@@ -702,7 +703,6 @@
 							break;
 					}
 				}
-				console.info(geojsonLayer)
 			}
 		}
 	}
