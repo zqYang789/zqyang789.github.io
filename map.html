@@ -681,8 +681,14 @@
 				var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new dojo.Color([188,59,229,1]), 2);
 				var fillSymbol= new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, lineSymbol,  new dojo.Color([194,251,235 ,0.4]));
 				geojsonLayer.clear();
-				for(var i=0;i<geojson.features.length;i++){
-					var feature = geojson.features[i]
+				var features;
+				if(geojson.type==="FeatureCollection"){
+					var features = geojson.features;
+				}else if(geojson.type==="Feature"){
+					features = [geojson.geometry]
+				}
+				for(var i=0;i<features.length;i++){
+					var feature = features[i];
 					var graphic;
 					switch (feature.type) {
 						case "MultiPolygon":
