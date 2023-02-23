@@ -577,7 +577,9 @@
 					map.setMapCursor("default");
 		            navToolbar.deactivate();
 					paintLayer.clear();
-					toolbar.deactivate(); 	
+					toolbar.deactivate();
+					geojsonLayer.clear();
+					mylocation.clear();
 	            });
 
 				query("#location").on("click",function(event){
