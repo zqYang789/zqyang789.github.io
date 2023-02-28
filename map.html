@@ -155,9 +155,9 @@
       </style>
 	  
 	  
-      <script src="http://zqy789.gitee.io/arcgis_api/3.21/init.js"></script>
+      <script src="https://zqy789.gitee.io/arcgis_api/3.21/init.js"></script>
     <script>
-    var map,layer1,layer2,navToolbar,registry,handler,measurement,dialog,paintLayer,draw,cz,mylocation,geojsonLayer;
+    var map,layer1,layer2,navToolbar,registry,handler,measurement,dialog,paintLayer,draw,cz,mylocation,geojsonLayer,outLineLayer;
     var SimpleMarkerSymbol,SimpleLineSymbol,SimpleFillSymbol,Graphic,Polyline,SpatialReferences;
     require([
 		"dojo/dom",
@@ -255,6 +255,7 @@
 				initTools();
 				initLocation();
 				initGeojson();
+				initOutLine();
 				initDraw();
 				listenDrawStart();
 				listenDrawEnd();
@@ -298,6 +299,11 @@
 			function initLocation(){
 				mylocation = new GraphicsLayer();
 				map.addLayer(mylocation);
+			}
+			//定义轮廓图层
+			function initOutLine(){
+				outLineLayer = new GraphicsLayer();
+				map.addLayer(outLineLayer);
 			}
 			//初始化geojson图层
 			function initGeojson(){
@@ -712,11 +718,41 @@
 			}
 		}
 	}
-    </script>
+
+	$(document).ready(function () {
+		$("input").keydown(function (event) {
+			if (event.keyCode == 13) {
+				var name = document.getElementById("area").value;
+				var bdary = new BMap.Boundary();
+				bdary.get(name, function(rs){       //获取行政区域
+					var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255,0,0,1]), 2);
+					var fillSymbol= new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, lineSymbol,  new dojo.Color([194,251,235 ,0.4]));
+					outLineLayer.clear();
+					var count = rs.boundaries.length; //行政区域的点有多少个
+					for(var i = 0; i < count; i++){
+						var polygon = new Polyline(new SpatialReference({wkid:4326}));
+						var  singleBoindaries =  rs.boundaries[i].split(";")
+						var paths = [];
+						for(var j=0;j<singleBoindaries.length;j++){
+							var wgs84 = bd09towgs84(Number(singleBoindaries[j].split(",")[0]),Number(singleBoindaries[j].split(",")[1]));
+							paths.push(wgs84);
+						}
+						polygon.addPath(paths);
+						var graphic= new Graphic(polygon, fillSymbol);
+						outLineLayer.add(graphic)
+					}
+				});
+			}
+		});
+	});
+	</script>
   </head>
 
   <body class="calcite">
-			  <div class="panel panel-primary" style="width:50px;position:absolute; left:10px; top:65px; z-Index:999;">
+  			  <div style="position: absolute;left: 10px;top:10px;z-index:99">
+				  <input type="text" id="area" placeholder="输入省、直辖市或县名称" size="28" style="padding-left: 5px;height: 30px;border:1px solid #337ab7 "/>
+			  </div>
+			  <div class="panel panel-primary" style="width:50px;position:absolute; left:10px; top:20%; z-Index:999;">
 				<div class="panel-heading" style="font-size:12px;padding:10px 10px;">
 					工具
 				</div>
