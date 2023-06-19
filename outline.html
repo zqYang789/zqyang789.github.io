@@ -7,7 +7,7 @@
     </script>
     <style type="text/css">
         body{font-size:13px;margin:10px}
-        #container{width:800px;height:500px;border:1px solid gray}
+        #container{width:90%;height:500px;border:1px solid gray}
     </style>
 </head>
 <body>
@@ -46,12 +46,32 @@
             map.clearOverlays();        //清除地图覆盖物
             var count = rs.boundaries.length; //行政区域的点有多少个
             console.info(rs);
+            var result = {};
+            if(count>1){
+	            result.type = "MultiPolygon"
+            }else{
+	            result.type = "Polygon"
+            }
+           	var coordinates = [];
             for(var i = 0; i < count; i++){
+	            var singleCoordinates = [];
                 var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: "#ff0000"}); //建立多边形覆盖物
                 map.addOverlay(ply);  //添加覆盖物
                 map.setViewport(ply.getPath());    //调整视野
-                document.getElementById("points").append(rs.boundaries[i]+"\n");
+                var boundaries = rs.boundaries[i].split(";")
+                for(var t=0;t<boundaries.length;t++){
+	                var pointStr = boundaries[t];
+	                var singlePoint = pointStr.split(",")
+	                singleCoordinates.push([Number(singlePoint[0]),Number(singlePoint[1])]);
+                }
+                coordinates.push(singleCoordinates);
             }
+            if(count>1){
+	            result.coordinates = [coordinates]
+            }else{
+	            result.coordinates = coordinates
+            }
+             document.getElementById("points").innerHTML=JSON.stringify(result);
         });
     }
 </script>
