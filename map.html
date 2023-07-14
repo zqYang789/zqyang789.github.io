@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -692,6 +692,8 @@
 					var features = geojson.features;
 				}else if(geojson.type==="Feature"){
 					features = [geojson.geometry]
+				}else if(geojson.type==="Polygon"||geojson.type==="MultiPolygon"){
+					features = [geojson]
 				}
 				for(var i=0;i<features.length;i++){
 					var feature = features[i];
@@ -700,7 +702,10 @@
 						case "MultiPolygon":
 							var polygon = new Polyline(new SpatialReference({wkid:4326}));
 							for(var j=0;j<feature.coordinates.length;j++){
-								polygon.addPath(feature.coordinates[j][0])
+								var pathArray = feature.coordinates[j]
+								for(var m=0;m<pathArray.length;m++){
+									polygon.addPath(pathArray[m])	
+								}
 							}
 							graphic= new Graphic(polygon, fillSymbol);
 							geojsonLayer.add(graphic);
@@ -708,7 +713,10 @@
 							break;
 						case "Polygon":
 							var polygon = new Polyline(new SpatialReference({wkid:4326}));
-							polygon.addPath(feature.coordinates[0])
+							for(var j=0;j<feature.coordinates.length;j++){
+								var pathArray = feature.coordinates[j]
+								polygon.addPath(pathArray)
+							}
 							graphic= new Graphic(polygon, fillSymbol);
 							geojsonLayer.add(graphic);
 							map.setExtent(graphic.geometry.getExtent())
